@@ -19,7 +19,11 @@
         mediaSource.addEventListener('sourceopen', async () => {
             const sourceBuffer = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.42E01E, mp4a.40.2"');
 
-            const response = await fetch('your_api_url'); // Thay thế bằng URL API thực tế
+            const response = await fetch('http://localhost:5000/videos/video/tom-and-jerry', {
+                headers: {
+                    range: 'bytes=0-'
+                }
+            }); // Thay thế bằng URL API thực tế
             const reader = response.body.getReader();
 
             const pump = async () => {
@@ -32,9 +36,14 @@
                 if (!sourceBuffer.updating) {
                     sourceBuffer.appendBuffer(value);
                 } else {
-                    // Nếu sourceBuffer đang xử lý, thử lại sau một khoảng thời gian
-                    setTimeout(pump, 100);
+                    // Thử lại sau khi sourceBuffer kết thúc xử lý
+                    sourceBuffer.addEventListener('updateend', pumpOnce);
                 }
+            };
+
+            const pumpOnce = () => {
+                sourceBuffer.removeEventListener('updateend', pumpOnce);
+                pump();
             };
 
             pump();

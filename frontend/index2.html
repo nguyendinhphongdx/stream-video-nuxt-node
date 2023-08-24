@@ -22,17 +22,17 @@
     const nextButton = document.getElementById('nextButton');
     const dataVideos = [
         {
-            url: 'http://localhost:5000/tom-and-jerry.mp4',
+            url: 'http://localhost:5000/videos/video/tom-and-jerry',
             id: 1,
             poster: 'https://image.tmdb.org/t/p/w500/fev8UFNFFYsD5q7AcYS8LyTzqwl.jpg',
         },
         {
-            url: 'http://localhost:5000/outside-the-wire.mp4',
+            url: 'http://localhost:5000/videos/video/outside-the-wire',
             id: 2,
             poster: 'https://image.tmdb.org/t/p/w500/lOSdUkGQmbAl5JQ3QoHqBZUbZhC.jpg',
         },
         {
-            url: 'http://localhost:5000/tom-and-jerry-2.mp4',
+            url: 'http://localhost:5000/soul.mp4',
             id: 3,
             poster: 'https://image.tmdb.org/t/p/w500/fev8UFNFFYsD5q7AcYS8LyTzqwl.jpg',
         },
@@ -44,11 +44,12 @@
 
     async function loadVideo(video) {
         if (dataBlobs[video.id]) {
-            console.log('video ', video.id, ' load from cache');
+            console.log('video ', video.url, ' load from cache');
             return;
         }
         const videoUrl = video.url;
         if (!videoUrl) return console.log('not found video ', video.id);
+        console.log('loading video ...', video.url);
         return fetch(videoUrl)
             .then(response => response.blob())
             .then(blob => {
