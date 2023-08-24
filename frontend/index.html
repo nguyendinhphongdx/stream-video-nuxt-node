@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js" integrity="sha512-uMtXmF28A2Ab/JJO2t/vYhlaa/3ahUOgj1Zf27M5rOo8/+fcTUVH0/E0ll68njmjrLqOBjXM3V9NiPFL5ywWPQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="./full-video-buffer-client.js"></script>
+    <script>
+        navigator.serviceWorker
+            .register('./full-video-buffer-service-worker.js')
+            .then(registration => registration.update())
+            .catch(console.log)
+    </script>
+</head>
+
+<body>
+
+</body>
+<script>
+    // instance the client
+    let bufferVideo = new BufferVideo();
+    // start buffering a video
+    // optionally you can use a callback to display info
+    bufferVideo.startBuffer('http://localhost:5000/videos/video/tom-and-jerry', function (buffer) {
+        console.log('The video url is ' + buffer.url)
+        console.log('The video size is ' + buffer.size)
+        console.log('It downloaded a ' + (buffer.buffered | 0) + '% of the video')
+        console.log('Has been downloading for ' + (buffer.elapsed | 0) + ' seconds')
+        console.log('It needs ' + (buffer.remaining | 0) + '~ seconds to finish download')
+        console.log('It has been downloading at ' + buffer.speed + 'mb/s')
+        console.log('Is the download done? ' + (buffer.done ? 'YES' : 'Not yet'))
+    })
+</script>
+
+</html>

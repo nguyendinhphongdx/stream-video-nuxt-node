@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <video id="videoPlayer" controls autoplay style="width: 640px; height: 360px;" muted>
+        Your browser does not support the video tag.
+    </video>
+    <script>
+        const videoElement = document.getElementById('videoPlayer');
+        const mediaSource = new MediaSource();
+        videoElement.src = URL.createObjectURL(mediaSource);
+
+        mediaSource.addEventListener('sourceopen', async () => {
+            const sourceBuffer = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.42E01E, mp4a.40.2"');
+
+            const response = await fetch('your_api_url'); // Thay thế bằng URL API thực tế
+            const reader = response.body.getReader();
+
+            const pump = async () => {
+                const { done, value } = await reader.read();
+                if (done) {
+                    sourceBuffer.endOfStream();
+                    return;
+                }
+
+                if (!sourceBuffer.updating) {
+                    sourceBuffer.appendBuffer(value);
+                } else {
+                    // Nếu sourceBuffer đang xử lý, thử lại sau một khoảng thời gian
+                    setTimeout(pump, 100);
+                }
+            };
+
+            pump();
+        });
+    </script>
+</body>
+
+</html>

@@ -4,12 +4,12 @@ const videos = require('../mockData')
 const fs = require('fs')
 
 // get list of video
-router.get('/', (req,res)=>{
+router.get('/', (req, res) => {
     res.json(videos)
 })
 
 // make request for a particular video
-router.get('/:id/data', (req,res)=> {
+router.get('/:id/data', (req, res) => {
     const id = parseInt(req.params.id, 10)
     res.json(videos[id])
 })
@@ -25,14 +25,14 @@ router.get('/video/:id', (req, res) => {
         const start = parseInt(parts[0], 10);
         const end = parts[1]
             ? parseInt(parts[1], 10)
-            : fileSize-1;
-        const chunksize = (end-start) + 1;
-        const file = fs.createReadStream(videoPath, {start, end});
+            : fileSize - 1;
+        const chunksize = (end - start) + 1;
+        const file = fs.createReadStream(videoPath, { start, end });
         const head = {
             'Content-Range': `bytes ${start}-${end}/${fileSize}`,
             'Accept-Ranges': 'bytes',
             'Content-Length': chunksize,
-            'Content-Type': 'video/mp4',
+            'Content-Type': `bytes ${start}-${end}/${fileSize}`,
         };
         res.writeHead(206, head);
         file.pipe(res);
@@ -45,8 +45,6 @@ router.get('/video/:id', (req, res) => {
         fs.createReadStream(videoPath).pipe(res);
     }
 });
-
 // captions route
-const captionPath = '/home/madfinger/Desktop/MyProjects/streaming-app/backend'
-router.get('/video/:id/caption', (req, res) => res.sendFile(`assets/captions/${req.params.id}.vtt`, { root: captionPath }));
+router.get('/video/:id/caption', (req, res) => res.sendFile(`assets/captions/${req.params.id}.vtt`, { root: process.cwd() }));
 module.exports = router;

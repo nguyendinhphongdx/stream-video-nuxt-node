@@ -6,6 +6,12 @@ const allVideos = [
         name: 'Tom & Jerry'
     },
     {
+        id: "tom-and-jerry-2",
+        poster: 'https://image.tmdb.org/t/p/w500/fev8UFNFFYsD5q7AcYS8LyTzqwl.jpg',
+        duration: '3 mins',
+        name: 'Tom & Jerry'
+    },
+    {
         id: "soul",
         poster: 'https://image.tmdb.org/t/p/w500/kf456ZqeC45XTvo6W9pW5clYKfQ.jpg',
         duration: '4 mins',
