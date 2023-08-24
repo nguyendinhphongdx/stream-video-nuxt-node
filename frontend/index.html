@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Video</title>
+</head>
+
+<body>
+    <div class="">
+        <video id="video" controls autoplay muted></video>
+        <p id="loadStatus">MOVIE LOADING...</p>
+    </div>
+
+</body>
+<script>
+    class MediaVideo {
+        range = {
+            start: 0,
+            end: '',
+        }
+        start() {
+            window.URL = window.URL || window.webkitURL;
+            window.MediaSource = window.MediaSource || window.WebKitMediaSource;
+            if (!!!window.MediaSource) {
+                return console.log('MediaSource API is not available!');
+            }
+            this.getDom();
+        }
+        getDom() {
+            var self = this;
+            const videoElement = document.getElementById("video");
+            videoElement.width = 1280;
+            videoElement.height = 720;
+            videoElement.controls = true;
+            videoElement.autoplay = true;
+            videoElement.id = self.identifier + "_player";
+            setInterval(function () {
+                self.mediaSource = new MediaSource();
+                self.queue = [];
+                videoElement.src = window.URL.createObjectURL(self.mediaSource);
+                self.mediaSource.addEventListener('sourceopen', function (e) {
+                    self.sourceBuffer = self.mediaSource.addSourceBuffer('video/mp4; codecs="avc1.42E01E,mp4a.40.2"'); // video/webm; codecs="vorbis,vp9"
+                    videoElement.play();
+                    self.sourceBuffer.addEventListener('update', function () {
+                        if (self.queue.length > 0 && !self.sourceBuffer.updating) {
+                            self.sourceBuffer.appendBuffer(self.queue.shift());
+                        }
+                    });
+                }, false);
+
+                self.getNextChunk();
+            }, 2000);
+        }
+        received(payload) {
+            var self = this;
+            if (self.sourceBuffer.updating || self.queue.length > 0) {
+                self.queue.push(new Uint8Array(payload.data));
+            } else {
+                self.sourceBuffer.appendBuffer(new Uint8Array(payload.data));
+            }
+        }
+
+        async getNextChunk() {
+            var self = this;
+            await fetch('http://localhost:5000/videos/video/tom-and-jerry', {
+                headers: {
+                    range: `bytes=${self.range.start}-${self.range.end}`,
+                }
+            })
+                .then(response => {
+                    return response.arrayBuffer();
+                })
+                .then(buffer => {
+                    self.received({ data: buffer });
+                })
+                .catch(error => console.error(error));
+        }
+
+    }
+
+    const media = new MediaVideo();
+    media.start();
+</script>
+
+</html>

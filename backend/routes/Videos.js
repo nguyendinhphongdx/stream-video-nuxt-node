@@ -2,14 +2,15 @@ const express = require('express')
 const router = express.Router()
 const videos = require('../mockData')
 const fs = require('fs')
+const ffmpeg = require('fluent-ffmpeg');
 
 // get list of video
-router.get('/', (req,res)=>{
+router.get('/', (req, res) => {
     res.json(videos)
 })
 
 // make request for a particular video
-router.get('/:id/data', (req,res)=> {
+router.get('/:id/data', (req, res) => {
     const id = parseInt(req.params.id, 10)
     res.json(videos[id])
 })
@@ -19,23 +20,29 @@ router.get('/video/:id', (req, res) => {
     const videoPath = `assets/${req.params.id}.mp4`;
     const videoStat = fs.statSync(videoPath);
     const fileSize = videoStat.size;
-    const videoRange = req.headers.range;
-    if (videoRange) {
-        const parts = videoRange.replace(/bytes=/, "").split("-");
-        const start = parseInt(parts[0], 10);
-        const end = parts[1]
-            ? parseInt(parts[1], 10)
-            : fileSize-1;
-        const chunksize = (end-start) + 1;
-        const file = fs.createReadStream(videoPath, {start, end});
-        const head = {
-            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+    const chunkSize = 3 * 1024 * 1024; // 3MB
+    const totalChunks = Math.ceil(fileSize / chunkSize);
+
+
+    const range = req.headers.range;
+    if (range) {
+        const [start, end] = range.replace('bytes=', '').split('-');
+        const startByte = parseInt(start, 10);
+        const endByte = end ? Math.min(parseInt(end, 10), startByte + chunkSize - 1) : startByte + chunkSize - 1;
+
+        const contentLength = endByte - startByte + 1;
+        const headers = {
+            'Content-Range': `bytes ${startByte}-${endByte}/${fileSize}`,
             'Accept-Ranges': 'bytes',
-            'Content-Length': chunksize,
+            'Content-Length': contentLength,
             'Content-Type': 'video/mp4',
         };
-        res.writeHead(206, head);
-        file.pipe(res);
+
+        res.writeHead(206, headers);
+
+        const readStream = fs.createReadStream(videoPath, { start: startByte, end: endByte });
+
+        readStream.pipe(res);
     } else {
         const head = {
             'Content-Length': fileSize,
@@ -47,6 +54,41 @@ router.get('/video/:id', (req, res) => {
 });
 
 // captions route
-const captionPath = '/home/madfinger/Desktop/MyProjects/streaming-app/backend'
-router.get('/video/:id/caption', (req, res) => res.sendFile(`assets/captions/${req.params.id}.vtt`, { root: captionPath }));
+router.get('/video/:id/caption', (req, res) => res.sendFile(`assets/captions/${req.params.id}.vtt`, { root: process.cwd() }));
+
+router.get('/convert/:id', (req, res) => {
+    const videoPath = process.cwd() + `/assets/${req.params.id}.mp4`;
+    const inputFilePath = videoPath; // Đường dẫn đến tệp video đầu vào
+    const outputFolder = process.cwd() + '/assets/m3u8/'; // Thư mục đầu ra cho các phân đoạn và tệp m3u8
+
+    // Thực hiện chuyển đổi video thành định dạng m3u8 và các phân đoạn
+    ffmpeg(inputFilePath)
+        .outputOptions(['-hls_time 10', '-hls_list_size 0', `-hls_segment_filename ${outputFolder}/${req.params.id}_segment%d.ts`])
+        .output(`${outputFolder}/${req.params.id}.m3u8`) // Tệp đầu ra m3u8
+        .on('end', () => {
+            console.log('Chuyển đổi hoàn thành.');
+            res.send('Chuyển đổi hoàn thành.');
+        })
+        .on('error', (err) => {
+            console.error('Lỗi chuyển đổi:', err);
+            res.status(500).send('Lỗi chuyển đổi.');
+        })
+        .run();
+});
+
+// Định nghĩa route trả về playlist M3U8
+router.get('/playlist/:id', (req, res) => {
+    const playlistPath = process.cwd() + `/assets/m3u8/${req.params.id}`; // Đường dẫn tới tệp playlist thực tế
+    const stream = fs.createReadStream(playlistPath);
+    stream.pipe(res);
+});
+
+// Định nghĩa route trả về các phân đoạn video
+router.get('/segments/:segment', (req, res) => {
+    const segmentPath = process.cwd() + `/assets/m3u8/${req.params.segment}`;  // Đường dẫn tới các phân đoạn thực tế
+    const stream = fs.createReadStream(segmentPath);
+    res.setHeader('Cache-Control', 'max-age=2592000');
+    stream.pipe(res);
+});
+
 module.exports = router;
