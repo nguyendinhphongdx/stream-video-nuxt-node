@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <header>
+    <h3>Video Player Example</h3>
+  </header>
+  <div class="container">
+    <div class="wrapper">
+      <div class="col col-left">
+        <video id="video" controls autoplay crossorigin="anonymous"></video>
+        <div class="content">
+          <h4 id="name">Video is empty</h4>
+        </div>
+        <div class="control-buttons">
+          <button id="prevButton">Previous</button>
+          <button id="nextButton">Next</button>
+        </div>
+      </div>
+      <div class="col col-right" id="videos">
+      </div>
+    </div>
+  </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<!-- Or if you want the latest version from the main branch -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/hls.js@canary"></script> -->
+
+<script>
+  const video = document.getElementById('video');
+  const prevButton = document.getElementById('prevButton');
+  const nextButton = document.getElementById('nextButton');
+
+  const dataVideos = [];
+  let currentIndex = 0;
+
+  // First check for native browser HLS support
+  if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    // If no native HLS support, check if HLS.js is supported
+    //
+  } else if (Hls.isSupported()) {
+    fetch('/videos')
+      .then(response => response.json())
+      .then(videos => {
+        dataVideos.push(...videos);
+        generateListVideoScroll();
+        start();
+      })
+      .catch(err => console.error(err));
+  }
+
+  async function loadVideo(video) {
+    const videoUrl = video.source;
+    if (video.preloaded) {
+      console.log('video', video.id, 'is has been loaded before');
+    } else {
+      console.log('video', video.id, 'is loading');
+    }
+    const loader = new Hls({
+      startFragPrefetch: true,
+      debug: true,
+      lowLatencyMode: false,
+    });
+    loader.loadSource(videoUrl);
+    loader.on(Hls.Events.FRAG_LOADED, function (event, data) {
+      video.loaded += data.frag.stats.loaded;
+      var loadedPercentage = (data.frag.stats.loaded / data.frag.stats.total) * 100;
+      console.log('Video ', video.id, loadedPercentage.toFixed(2) + '%');
+    });
+    video.preloaded = true;
+    const status = document.getElementById(`status-${video.id}`);
+    if (status) {
+      status.innerHTML = 'true';
+    }
+    return loader;
+  }
+
+  async function start() {
+    const currentVideo = dataVideos[currentIndex];
+    hls = await loadVideo(currentVideo);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MEDIA_ATTACHED, function () {
+      video.muted = true;
+      video.play();
+    });
+    hls.on(Hls.Events.MEDIA_ATTACHED, function () {
+      console.log('video and hls.js are now bound together !');
+    });
+    hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
+      console.log(
+        'manifest loaded, found ' + data.levels.length + ' quality level',
+      );
+    });
+    if (currentIndex === dataVideos.length - 1) {
+      nextButton.setAttribute('disabled', 'disabled');
+    } else {
+      nextButton.removeAttribute('disabled');
+    }
+    if (currentIndex === 0) {
+      prevButton.setAttribute('disabled', 'disabled');
+    } else {
+      prevButton.removeAttribute('disabled');
+    }
+
+    const previousVideo = dataVideos[currentIndex - 1];
+    if (previousVideo) {
+      loadVideo(previousVideo);
+    }
+    const nextVideo = dataVideos[currentIndex + 1];
+    if (nextVideo) {
+      loadVideo(nextVideo);
+    }
+  };
+
+  video.addEventListener('ended', () => {
+    if (!nextButton.hasAttribute('disabled')) {
+      nextButton.click();
+    }
+  });
+
+  nextButton.addEventListener('click', () => {
+    currentIndex = currentIndex + 1;
+    start();
+  });
+
+  prevButton.addEventListener('click', () => {
+    currentIndex = currentIndex - 1;
+    start();
+  });
+
+  function generateListVideoScroll() {
+    const str = dataVideos.map((video, index) => {
+      return `<div class="card-video ${currentIndex === index ? 'active' : ''}" onclick="">
+        <img width="230px" src="${video.poster}" alt="">
+        <p style="width: 100%; text-align: center">${video.name}</p>
+        <br />
+        <span> Video preloaded :<span id="status-${video.id}">${video.preloaded}</span></span>
+      </div>`;
+    });
+    document.getElementById('videos').innerHTML = str;
+  }
+</script>
+
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  body {
+    background-color: #373a3f;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, .4);
+    backdrop-filter: blur(10px);
+    color: white;
+  }
+
+  .container {
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .wrapper {
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 50px;
+    background-color: rgba(0, 0, 0, .3);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+  }
+
+  video {
+    width: 640px;
+    height: 400px;
+    background: #181818;
+    backdrop-filter: blur(1px);
+  }
+
+  /* CSS */
+  button {
+    appearance: none;
+    background-color: #2ea44f;
+    border: 1px solid rgba(27, 31, 35, .15);
+    border-radius: 6px;
+    box-shadow: rgba(27, 31, 35, .1) 0 1px 0;
+    box-sizing: border-box;
+    color: #fff;
+    cursor: pointer;
+    display: inline-block;
+    font-family: -apple-system, system-ui, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+    padding: 6px 16px;
+    position: relative;
+    text-align: center;
+    text-decoration: none;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  button:focus:not(:focus-visible):not(.focus-visible) {
+    box-shadow: none;
+    outline: none;
+  }
+
+  button:hover {
+    background-color: #2c974b;
+  }
+
+  button:focus {
+    box-shadow: rgba(46, 164, 79, .4) 0 0 0 3px;
+    outline: none;
+  }
+
+  button:disabled {
+    background-color: #94d3a2;
+    border-color: rgba(27, 31, 35, .1);
+    color: rgba(255, 255, 255, .8);
+    cursor: default;
+  }
+
+  button:active {
+    background-color: #298e46;
+    box-shadow: rgba(20, 70, 32, .2) 0 1px 0 inset;
+  }
+
+  .card-video {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    width: 270px;
+    padding: 20px;
+    transition: all .5s ease;
+    border-radius: 10px;
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+
+  .card-video.active,
+  .card-video:hover {
+    cursor: pointer;
+    background-color: rgba(155, 149, 149, 0.2);
+  }
+
+  .card-video img {
+    width: 100%;
+  }
+
+  .card-video p {
+    margin-top: 10px;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: rgb(245, 213, 213);
+  }
+
+  .card-video span {
+    font-size: 14px;
+    color: rgb(245, 213, 213);
+  }
+
+  .col {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .content {
+    margin-top: 20px;
+    color: #fff;
+  }
+
+  .control-buttons {
+    margin-top: 20px;
+
+  }
+</style>
+
+</html>
