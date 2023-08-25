@@ -4,8 +4,14 @@ const cors = require('cors');
 const path = require('path');
 const app = express();
 app.use(cors())
-app.get('/video', (req, res) => {
-    res.sendFile('assets/video1.mp4', { root: __dirname });
+
+
+app.get('/', (req, res) => {
+    res.sendFile('hls-videos.html', { root: __dirname });
+});
+
+app.get('/blob', (req, res) => {
+    res.sendFile('blob.html', { root: __dirname });
 });
 
 //videos route
@@ -14,5 +20,5 @@ app.use('/videos', Videos)
 
 app.listen(5000, () => {
     console.log('Listening on port 5000!')
-}); 
+});
 
