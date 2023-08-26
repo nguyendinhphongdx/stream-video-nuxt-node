@@ -18,7 +18,7 @@ app.get('/blob', (req, res) => {
 const Videos = require('./routes/Videos')
 app.use('/videos', Videos)
 
-app.listen(process.env.PORT || 80, () => {
-    console.log('Listening on port 5000!')
+app.listen(80, () => {
+    console.log('Listening on port 80!')
 });
 

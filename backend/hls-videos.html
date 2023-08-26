@@ -10,6 +10,7 @@
 <body>
   <header>
     <h3>Video Player Example</h3>
+    <h4>Nguyễn Đình Phong | <a target="_blank" href="https://portfolio-nguyendinhphong.vercel.app/">Portfolio</a></h4> 
   </header>
   <div class="container">
     <div class="wrapper">
@@ -186,6 +187,7 @@
     background-color: rgba(0, 0, 0, .4);
     backdrop-filter: blur(10px);
     color: white;
+    position: relative;
   }
 
   .container {
@@ -313,6 +315,15 @@
   .control-buttons {
     margin-top: 20px;
 
+  }
+
+  header h4 {
+    position: absolute;
+    right: 20px;
+  }
+
+  header a {
+    color: white !important;
   }
 </style>
 
