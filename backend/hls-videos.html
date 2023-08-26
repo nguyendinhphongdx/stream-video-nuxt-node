@@ -5,12 +5,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"
+    integrity="sha512-3gJwYpMe3QewGELv8k/BX9vcqhryRdzRMxVfq6ngyWXwo03GFEzjsUm8Q7RZcHPHksttq7/GFoxjCVUjkjvPdw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-toast-plugin/1.3.2/jquery.toast.min.css"
+    integrity="sha512-wJgJNTBBkLit7ymC6vvzM1EcSWeM9mmOu+1USHaRBbHkm6W9EgM0HY27+UtUaprntaYQJF75rc8gjxllKs5OIQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-toast-plugin/1.3.2/jquery.toast.min.js"
+    integrity="sha512-zlWWyZq71UMApAjih4WkaRpikgY9Bz1oXIW5G0fED4vk14JjGlQ1UmkGM392jEULP8jbNMiwLWdM8Z87Hu88Fw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 
 <body>
   <header>
     <h3>Video Player Example</h3>
-    <h4>Nguyễn Đình Phong | <a target="_blank" href="https://portfolio-nguyendinhphong.vercel.app/">Portfolio</a></h4> 
+    <h4>Nguyễn Đình Phong | <a target="_blank" href="https://portfolio-nguyendinhphong.vercel.app/">Portfolio</a></h4>
   </header>
   <div class="container">
     <div class="wrapper">
@@ -151,7 +160,7 @@
 
   function generateListVideoScroll() {
     const str = dataVideos.map((video, index) => {
-      return `<div class="card-video" id="${video.id}" onclick="">
+      return `<div class="card-video" id="${video.id}" onclick="toast()">
         <img width="230px" src="${video.poster}" alt="">
         <p style="width: 100%; text-align: center">${video.name}</p>
         <br />
@@ -160,6 +169,16 @@
       </div>`;
     });
     document.getElementById('videos').innerHTML = str;
+  }
+
+  function toast() {
+    $.toast({
+      heading: 'Cảnh báo',
+      text: 'Xử dụng các phím điều khiển Next, Previous để xem các video liên tiếp!',
+      showHideTransition: 'plain',
+      icon: 'warning',
+      position: 'top-right',
+    })
   }
 </script>
 
@@ -324,6 +343,9 @@
 
   header a {
     color: white !important;
+  }
+  .jq-toast-single {
+    font-size: 14px !important;
   }
 </style>
 
